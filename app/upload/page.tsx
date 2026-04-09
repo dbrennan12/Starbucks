@@ -30,20 +30,29 @@ export default function UploadPage() {
     const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
 
     const parsed: ParsedScheduleRow[] = jsonData.map((row) => {
-      const store = String(row['Store'] || row['store'] || '');
-      const storeMatch = store.match(/#?\s*(\d+)/);
-      const storeNumber = storeMatch ? storeMatch[1].padStart(5, '0') : store;
+  const pick = (...keys: string[]) => {
+    for (const k of keys) {
+      if (row[k] !== undefined && row[k] !== null && row[k] !== '') {
+        return row[k];
+      }
+    }
+    return '';
+  };
 
-      return {
-        night: Number(row['Night'] || row['night'] || 0),
-        date: parseDate(row['Date'] || row['date']),
-        store,
-        storeNumber,
-        address: String(row['Address'] || row['address'] || ''),
-        city: String(row['City'] || row['city'] || ''),
-        state: String(row['State'] || row['state'] || ''),
-      };
-    });
+  const store = String(pick('Store #', 'Store', 'store #', 'store'));
+  const storeMatch = store.match(/#?\s*(\d+)/);
+  const storeNumber = storeMatch ? storeMatch[1].padStart(5, '0') : store;
+
+  return {
+    night: Number(pick('Night', 'night') || 0),
+    date: parseDate(pick('Date', 'date')),
+    store,
+    storeNumber,
+    address: String(pick('Address', 'address')),
+    city: String(pick('City', 'city')),
+    state: String(pick('St', 'State', 'st', 'state')),
+  };
+});
 
     setRows(parsed);
     setMessage(`Parsed ${parsed.length} jobs from ${file.name}`);
